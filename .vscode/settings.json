@@ -1,0 +1,13 @@
+{
+    "python.autoComplete.extraPaths": [
+    ],
+    "python.analysis.extraPaths": [
+        "/media/chamaeleontis/Observatory_main/Code/",
+        "/media/chamaeleontis/Observatory_main/Code/observations_transits",
+        "/media/chamaeleontis/Observatory_main/Code/observations_transits/PTO",
+        "/media/chamaeleontis/Observatory_main/Code/observations_transits/PTO/PTO",
+    ],
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "/media/chamaeleontis/Observatory_main/Code/"
+    }
+}
