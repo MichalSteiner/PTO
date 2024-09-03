@@ -16,7 +16,11 @@ os.chdir(cwd)
 import calculations as calc
 import instruments as inst
 import plots as plot
+import logging
 
+
+logger = logging.getLogger(__name__)
+logger = default_logger_format(logger) 
 
 def _load_ETC_file(filename: str) -> np.ndarray:
     """
@@ -116,7 +120,7 @@ def _load_SNR_table_ESPRESSO(
         Array of [wavelength, expected SNR] for worst case scenario.
 
     """
-    if instrument != 'ESPRESSO':
+    if instrument != 'ESPRESSO' or 'ESPRESSO_4UT':
         logger.warning('Loading SNR values from ESPRESSO, even through usage of different instrument. This will increase error in the resulting dataset, which however will not show in the result.')
     
     spectral_type = _find_stellar_type_ESPRESSO(
@@ -147,7 +151,7 @@ def _scale_instrument(spectrum: sp.Spectrum1D,
         Target instrument, for which we want to simulate the dataset.
     """
     
-    scale_factor = (Instruments_size[to_instrument].value / Instruments_size[from_instrument].value)**2 
+    scale_factor = (inst.Instruments_size[to_instrument].value / inst.Instruments_size[from_instrument].value)**2 
     
     new_spectrum = sp.Spectrum1D(
         spectral_axis = spectrum.spectral_axis,
@@ -264,7 +268,7 @@ def generate_mock_spectrum(
     
     new_stellar_spectrum = sm.interpolate2commonframe(
         stellar_spectrum,
-        inst.Instruments[instrument].value
+        inst.Instruments[instrument]
         )
     
     best_scenario, average_scenario, worst_scenario = _load_SNR_table_ESPRESSO(
@@ -282,7 +286,7 @@ def generate_mock_spectrum(
     average_scenario_spectrum = _scale_spectrum_with_SNR(new_stellar_spectrum, average_scenario)
     worst_scenario_spectrum = _scale_spectrum_with_SNR(new_stellar_spectrum, worst_scenario)
     
-    if instrument != 'ESPRESSO':
+    if instrument != 'ESPRESSO' or instrument != 'ESPRESSO_4UT':
         best_scenario_spectrum = _scale_instrument(best_scenario_spectrum, 'ESPRESSO', instrument)
         average_scenario_spectrum = _scale_instrument(average_scenario_spectrum, 'ESPRESSO', instrument)
         worst_scenario_spectrum = _scale_instrument(worst_scenario_spectrum, 'ESPRESSO', instrument)

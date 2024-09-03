@@ -208,7 +208,8 @@ class _Flags_transit:
     def check(self,
               Visibility: _Visibility,
               parameters: pd.DataFrame,
-              baseline_length: float
+              baseline_length: float,
+              partial : bool | float = False
               ):
         """
         Check the values of flags.
@@ -227,6 +228,9 @@ class _Flags_transit:
         None.
 
         """
+        if partial == False:
+            partial = 1
+        
         # Visibility of transit
         if (len(Visibility.Transit) > (parameters['pl_trandur'] * 60)-1):
             self.transit = True
@@ -234,6 +238,10 @@ class _Flags_transit:
         else:
             self.transit = False
             self.transit_coverage = ((len(Visibility.Transit))/ (parameters['pl_trandur'] * 60))
+            
+            if self.transit_coverage > partial:
+                self.transit = True
+            
         
         # Baseline visibility
         self.baseline = (len(Visibility.Baseline) > baseline_length * 60)
@@ -244,6 +252,8 @@ class _Flags_transit:
         self.baseline_ingress_coverage = np.min([( len(Visibility.Ingress) / (baseline_length/2 * 60)),1])
         self.baseline_egress_coverage = np.min([(len(Visibility.Egress) / (baseline_length/2 * 60) ),1])
         
+        if self.baseline_coverage > partial:
+            self.baseline = True
         return None
 #%% Flags for a given window
 @dataclass(init=True, repr=False, eq=False, order=False, unsafe_hash=False, frozen=False)
@@ -304,6 +314,7 @@ class Plot_transit:
     Planet_transit: _Planet_transits
     Night: astime.Time
     Uncertainty: u.quantity.Quantity
+    partial: bool | float
     TimeArray: _TimeArray = _TimeArray()
     AltitudeArray: _AltitudeArray = _AltitudeArray()
     VisibilityFull: _Visibility = _Visibility()
@@ -323,9 +334,7 @@ class Plot_transit:
         None.
 
         """
-        self._define_arrays()
-        # TODO ad
-        
+        self._define_arrays()        
         self._calculate_baseline_observations()
         self._define_observability()
         self._define_flags()
@@ -725,10 +734,12 @@ class Plot_transit:
         self.FlagsFull.check(Visibility = self.VisibilityFull,
                              parameters = self.Planet_transit.parameters,
                              baseline_length = self.baseline_length,
+                             partial= self.partial
                              )
         self.FlagsTwilight.check(Visibility = self.VisibilityTwilight,
                                  parameters = self.Planet_transit.parameters,
-                                 baseline_length = self.baseline_length
+                                 baseline_length = self.baseline_length,
+                                 partial= self.partial
                                  )
         self.FlagsWindow.check(
             FlagsTransitFull= self.FlagsFull,
@@ -1095,7 +1106,7 @@ class Transit_windows:
 
     def plot_transit_windows(self,
                              Location: str,
-                             partial: bool = False,
+                             partial: bool | float = False,
                              ):
         """
         Creates plots of all valid transit windows provided Location, assuming the filtered table and all possible ephemeris sets.
@@ -1114,8 +1125,8 @@ class Transit_windows:
         """
         logger.info('='*60)
         
-        if partial:
-            logger.critical('Partial windows are not implemented yet!')
+        # if partial:
+        #     logger.critical('Partial windows are not implemented yet!')
         self._order_list()
 
         
@@ -1140,7 +1151,8 @@ class Transit_windows:
                 new_Plot = Plot_transit(Location = Location,
                                           Planet_transit = Planet_transit,
                                           Night = night,
-                                          Uncertainty = uncertainty
+                                          Uncertainty = uncertainty,
+                                          partial= partial
                                           )
                 
                 if new_Plot.quality != -9999:
@@ -1159,14 +1171,6 @@ class Transit_windows:
                 else:
                     night = (new_Plot.Night-1*u.day).to_value('datetime').strftime('%Y%m%d')
                     logger.warning(f'Skipping transit window {night}')
-                    
-
-                
-            #TODO
-            # filename = self.save_directory + '/' + markdown_summary
-            # self.create_transit_summary(Plots = Plots,
-            #                             filename = filename
-            #                             )
             logger.info('='*60)
         return
     

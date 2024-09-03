@@ -19,24 +19,32 @@ class ESPRESSO_wavelength:
         None.
 
         """
-        self.wavelength_range = np.array([
-        np.linspace(3771.2787376605725, 7905.599289073489,170*9111),
-        ])
-        self.wavelength_range = np.sort(self.wavelength_range.flatten())
-        self.wavelength_range *= u.AA
+        self.wavelength_range = np.linspace(3771.2787376605725, 7905.599289073489, 443262) * u.AA # Number of S1D pixels 
         return
 
+@dataclass(init=True, repr=False, eq=False, order=False, unsafe_hash=False, frozen=False)
+class ESPRESSO_4UT_wavelength:
+    """Class holding the wavelength range of ESPRESSO 4UT mode."""
+    
+    def __post_init__(self):
+        """
+        Estimated wavelength range as taken from real observation.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.wavelength_range = np.linspace(3771.2787376605725, 7905.599289073489,221570) *u.AA # Number of S1D pixels
+        return
 #%%
-class Instruments(Enum):
-    """Enum class holding wavelength ranges for instruments."""
-    
-    ESPRESSO = ESPRESSO_wavelength().wavelength_range
-    ESPRESSO_4UT = ''
-    HARPS = ''
-    NIRPS = ''
-    # # FIXME - This is not correct, but no official ETC for ANDES is provided yet
-    # ANDES = ANDES_wavelength_range.wavelength_range
-    
+Instruments = {
+    'ESPRESSO': ESPRESSO_wavelength().wavelength_range,
+    'ESPRESSO_4UT': ESPRESSO_4UT_wavelength().wavelength_range,
+    'HARPS': '',
+    'NIRPS': '',
+    }
+
     
 class Instruments_size(Enum):
     """Enum class holding wavelength ranges for instruments."""

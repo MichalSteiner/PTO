@@ -10,7 +10,7 @@ Created on Fri Jul 21 10:49:08 2023
 import pprint
 import p2api
 import pandas as pd
-import OT.NASA_exo
+import PTO.transits.NASA_exo
 import astropy.units as u
 from astroquery.simbad import Simbad
 from dataclasses import dataclass
@@ -18,7 +18,7 @@ import os
 import astropy.time as astime
 import logging
 
-from OT.utilities import logger_default
+from PTO.utilities import logger_default
 
 logger = logging.getLogger(__name__)
 logger = logger_default(logger) 
@@ -30,7 +30,7 @@ p = pprint.PrettyPrinter(indent=4)
 class NightList:
     """Wrapper class holding all the nights information"""
     
-    Exoplanets_archive: OT.NASA_exo.NASA_Exoplanets_archive
+    Exoplanets_archive: PTO.transits.NASA_exo.NASA_Exoplanets_archive
     
     
     def _generate_obs_ESPRESSO(self,
@@ -165,8 +165,8 @@ class NightList:
         response, _ = self.api.verifyOB(observing_block_ID, True)
         if response['observable']:
           logger.info('*** Congratulations. Your OB', observing_block_ID, ob['name'], 'is observable!')
-        else:
-          logger.info('OB', observing_block_ID, 'is >>not observable<<. See messages below.')
+        # else:
+        #   logger.info('OB', observing_block_ID, 'is >>not observable<<. See messages below.')
         print(' ', '\n  '.join(response['messages']))
 
     
@@ -338,61 +338,60 @@ simb.remove_votable_fields(*old_fields)
 
 
 # TODO: This is not optimal solution. A better handling of user/password is recommended
-user = 'ENTER_YOUR_USERNAME'
-password = 'ENTER_YOUR_PASSWORD'
-runContainerId_SMP112 = 3659414
-runContainerId_SMP113 = 3794801
-runContainerId_dVMP113 = 3795313
-Exoplanets = OT.NASA_exo.NASA_Exoplanets_archive(
+user = 'Cham'
+password = 'MsVbPgozj3Sx2XWc'
+runContainerId_SMP114 = 3953548
+runContainerId_VMP114 = 3961226
+runContainerId_dVMP114 = 3953991
+Exoplanets = PTO.transits.NASA_exo.NASA_Exoplanets_archive(
         force_reload = False,
         # use_PS = False,
         full_PS = False
         )
 
 list_of_planets = [
-    # ['AU Mic c', False],
-    # ['HAT-P-26 b', False],
-    # ['HATS-12 b', True],
-    # ['HATS-37 A b', False],
-    # ['HATS-38 b', False],
-    # ['HATS-7 b', True],
-    # ['HD 219666 b', True],
-    # ['HD 93963 A c', False],
-    # ['K2-198 b', False],
-    # ['K2-405 b', False],
-    # ['K2-406 b', False],
-    # ['NGTS-14 A b', True],
-    # ['TOI-132 b', True],
-    # ['TOI-181 b', True],
-    # ['TOI-2374 b', True],
-    # ['TOI-5005 b', True],
-    ['TOI-3261 b', True]
+    ['K2-105 b', False],#VM
+    # ['K2-27 b', False], #VM
+    # ['K2-334 b', False], #dVM
+    # ['K2-353 b', False], #dVM
+    # ['K2-370 b', True], #SM
+    # ['TOI-1231 b', False], #dVM
+    # ['TOI-257 b', False], #dVM
+    # ['TOI-431 d', True], #SM
+    # ['TOI-2000 c', False], #VM
+    # ['HD 93963 A c', False], #VM
+    # ['K2-100 b', True], # SM
+    # ['TOI-1853 b', True] #SM
     ]
 
-directory_windows = '/media/chamaeleontis/Observatory_main/ESO_scheduling/CTW_ATREIDES_P113/Paranal/'
+directory_windows = '/media/chamaeleontis/Observatory_main/ESO_scheduling/ATREIDES_P114_planning_only/Paranal'
+directory_windows = '/media/chamaeleontis/Observatory_main/ESO_scheduling/ATREIDES_P114__only_20240527/Paranal'
 
-ATREIDES_P113 = NightList(
+
+
+ATREIDES_P114 = NightList(
     Exoplanets_archive= Exoplanets,
     )
 
-# ATREIDES_P113.generate_observation_list(
-#     user= user,
-#     password= password,
-#     runContainerId= runContainerId_dVMP113,
-#     list_of_planets= list_of_planets,
-#     directory_windows= directory_windows,
-#     SM_mode= False,
-#     quality= 5
-#     )
-ATREIDES_P113.generate_observation_list(
+ATREIDES_P114.generate_observation_list(
     user= user,
     password= password,
-    runContainerId= runContainerId_SMP112,
+    runContainerId= runContainerId_VMP114,
     list_of_planets= list_of_planets,
     directory_windows= directory_windows,
-    SM_mode= True,
-    quality= 5
+    SM_mode= False,
+    quality= 9
     )
+# ATREIDES_P114.generate_observation_list(
+#     user= user,
+#     password= password,
+#     runContainerId= runContainerId_SMP114,
+#     list_of_planets= list_of_planets,
+#     directory_windows= directory_windows,
+#     SM_mode= True,
+#     quality= 5
+#     )
+
 
 print('Yipeeeeeeeeeeeee')
 

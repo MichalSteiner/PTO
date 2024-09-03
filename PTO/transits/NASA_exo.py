@@ -22,7 +22,7 @@ import numpy as np
 import os
 import seaborn as sns
 from colorlog import ColoredFormatter
-from PTO.PTO.utilities import logger_default
+from PTO.utilities import logger_default
 logger = logging.getLogger(__name__)
 logger = logger_default(logger) 
 
@@ -720,6 +720,7 @@ def load_csv_ephemeris(Exoplanets: NASA_Exoplanets_archive,
     read_table = pd.read_csv(table, sep= ';')
     
     for ind, row in read_table.iterrows():
+        
         Exoplanets.add_custom_ephemeris(
             Transit_midpoint = float(row['T0']),
             Transit_midpoint_lower_error = float(row['T0_err']),
