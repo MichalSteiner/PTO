@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "justMyCode": true,
-            "module": "PTO.simulations.${fileBasenameNoExtension}",
+            "module": "PTO.${fileBasenameNoExtension}",
             "cwd":"${workspaceFolder}"
         },
         {

@@ -10,6 +10,7 @@ Created on Tue Aug 22 10:37:18 2023
 from enum import Enum
 import astropy.coordinates as coord
 import astropy.units as u
+from dataclasses import dataclass, field
 #%%
 class Observatories(Enum):
     """
@@ -31,5 +32,6 @@ class Observatories(Enum):
     Paranal = coord.EarthLocation.of_site('paranal')
     LaSilla = coord.EarthLocation.of_site('lasilla')
     LaPalma = coord.EarthLocation.of_site('lapalma')
+
 
 
