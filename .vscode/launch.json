@@ -9,19 +9,20 @@
             "type": "python",
             "request": "launch",
             "justMyCode": true,
-            "module": "PTO.${fileBasenameNoExtension}",
-            "cwd":"${workspaceFolder}"
+            "module": "PTO.database.NASA_exoplanet_archive",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"  // Add the workspace folder to PYTHONPATH
+            },
+            "console": "integratedTerminal"
         },
         {
-            "name": "Python: Current File",
+            "name": "Python: File",
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "env": {
-                "PYTHONPATH": "/media/chamaeleontis/Observatory_main/Code/rats:/media/chamaeleontis/Observatory_main/Code/observations_transits",
-            }
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
         }
     ]
 }

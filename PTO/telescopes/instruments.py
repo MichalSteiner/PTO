@@ -9,6 +9,7 @@ logger = logger_default(logger)
 
 @dataclass
 class Spectrograph():
+    
     name: str
     resolution_mode: str
     modes: list = field(default_factory=list) 
@@ -22,7 +23,8 @@ class Spectrograph():
             Mode(
                 mode_name=mode_name,
                 resolution=resolution,
-                simultaneous=simultaneous
+                simultaneous=simultaneous,
+                simulator= simulator
             )
         )
 
@@ -200,7 +202,6 @@ UVES._add_observing_mode(
     'HR',
     np.mean([40000, 110000]),
 )
-
 
 def print_all_spectrographs(resolution: str = 'all') -> None:
     """
