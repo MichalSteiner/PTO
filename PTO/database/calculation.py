@@ -366,17 +366,7 @@ class CalculationUtilities():
             If multiple solutions detected but unhandled, check what happened.
         """
         for missing_variable in MAPPER:
-            other_variables = {item:MAPPER[item] for item in MAPPER if item !=missing_variable}
-            
-            # primary_condition = self.table[MAPPER[missing_variable]].isna()
-            # other_conditions = [self.table[MAPPER[variable_other]].notna() for variable_other in other_variables]
-            
-            # combined_condition = np.logical_and.reduce(other_conditions)
-            # if transiting:
-            #     transiting_condition = (self.table['Flag.Transit'] == 1)
-            #     condition = primary_condition & combined_condition & transiting_condition
-            # else:
-            #     condition = primary_condition & combined_condition
+            other_variables = {variable: MAPPER[variable] for variable in MAPPER if variable !=missing_variable}
             
             indices = self._build_condition(
                 MAPPER= MAPPER,
@@ -384,8 +374,6 @@ class CalculationUtilities():
                 other_variables= other_variables,
                 transiting= transiting
             )
-            
-            # indices = self.table[condition].index
 
             if len(indices) == 0:
                 continue
