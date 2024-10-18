@@ -5,6 +5,7 @@ import astropy.nddata as nddata
 import astropy.constants as con
 from sympy import symbols, Eq, solve, sin, pi, sqrt, asin, cos, acos
 import logging
+import pandas as pd
 import sympy as smp
 
 from ..utils.utilities import logger_default, time_function
@@ -245,10 +246,105 @@ class CalculationUtilities():
             case _:
                 raise NotImplementedError('This variable is not implemented. FIXME')
     
+#TODO
+    def _build_condition(self,
+                         MAPPER: dict,
+                         missing_variable:str,
+                         other_variables: dict,
+                         transiting: bool) -> pd.Index:
+        """
+        Builds a combined condition to filter the table for given missing variable.
+
+        Parameters
+        ----------
+        MAPPER : dict
+            Mapper to use between symbolic map and table keys
+        missing_variable : str
+            Missing variable to solve the equation for
+        other_variables : dict
+            Other variables that are already available.
+        transiting : bool
+            Whether to filter out by transiting planets.
+
+        Returns
+        -------
+        pd.Index
+            Index where the table has the relevant condition. 
+        """
+
+        primary_condition = self.table[MAPPER[missing_variable]].isna()
+        other_conditions = [self.table[MAPPER[variable]].notna() for variable in other_variables]
+        combined_condition = np.logical_and.reduce(other_conditions)
+
+        if transiting:
+            transiting_condition = (self.table['Flag.Transit'] == 1)
+            condition = primary_condition & combined_condition & transiting_condition
+        else:
+            condition = primary_condition & combined_condition
+        return self.table[condition].index
+        
+#TODO
+    def _substitute_solution(self,
+                             solution,
+                             row,
+                             other_variables,
+                             missing_variable,
+                             mapper,
+                             unit_mapper):
+        """Substitutes the known values into the solution and calculates the uncertainty."""
+        values = {
+            key_name: row[key_value] * unit_mapper[key_name].value 
+            for key_name, key_value in mapper.items()
+        }
+        
+        subbed_solution = solution.subs(
+            {symbols(var_name): var_value for var_name, var_value in values.items() if not np.isnan(var_value)}
+        )
+
+        uncertainties = {
+            variable: max(
+                row.get(f'{mapper[variable]}.Error.Lower', 0), 
+                row.get(f'{mapper[variable]}.Error.Upper', 0)
+            ) * unit_mapper[variable].value
+            for variable in other_variables
+        }
+        
+        total_uncertainty = self._calculate_uncertainty(solution, uncertainties, values)
+        uncertainty_result = total_uncertainty / unit_mapper[str(missing_variable)].value
+
+        return subbed_solution, uncertainty_result
+
+#TODO
+    def _calculate_uncertainty(self,
+                               solution,
+                               uncertainties,
+                               values):
+        """Calculates total uncertainty using partial derivatives."""
+        total_uncertainty = 0
+        for var, uncertainty in uncertainties.items():
+            partial_derivative = smp.diff(solution, symbols(var))
+            total_uncertainty += (partial_derivative * uncertainty) ** 2
+        total_uncertainty = smp.sqrt(total_uncertainty)
+        
+        return total_uncertainty.subs({symbols(var_name): var_value for var_name, var_value in values.items()})
+
+#TODO
+    def _update_table(self,
+                      index,
+                      missing_variable,
+                      solution_value,
+                      uncertainty_result,
+                      mapper):
+        """Updates the table with the solved value and its uncertainty."""
+        self.table.loc[index, mapper[missing_variable]] = float(solution_value)
+        self.table.loc[index, f"{mapper[missing_variable]}.Error.Lower"] = float(uncertainty_result)
+        self.table.loc[index, f"{mapper[missing_variable]}.Error.Upper"] = float(uncertainty_result)
+    
     def _solve_equation(self,
                         Equation: Eq,
                         MAPPER: dict,
                         UNIT_MAPPER: dict,
+                        transiting: bool = True
                         ) -> None:
         """
         Solves the equation given a mapper and unit mapper.
@@ -261,68 +357,74 @@ class CalculationUtilities():
             Mapper matching the symbols and the column names in the table.
         UNIT_MAPPER : dict
             Unit mapper to match symbols and the units for the symbol.
+        transiting : bool
+            Whether the system must be transiting. If true, only transiting planets are considered.
 
         Raises
         ------
         ValueError
             If multiple solutions detected but unhandled, check what happened.
         """
-        for variable in MAPPER:
-            other_variables = {item:MAPPER[item] for item in MAPPER if item !=variable}
-            condition = (self.table[MAPPER[variable]].isna() &
-                         [self.table[MAPPER[variable_other]].notna() for variable_other in other_variables]
-                         )
-            indices = self.table[condition].index
+        for missing_variable in MAPPER:
+            other_variables = {item:MAPPER[item] for item in MAPPER if item !=missing_variable}
+            
+            # primary_condition = self.table[MAPPER[missing_variable]].isna()
+            # other_conditions = [self.table[MAPPER[variable_other]].notna() for variable_other in other_variables]
+            
+            # combined_condition = np.logical_and.reduce(other_conditions)
+            # if transiting:
+            #     transiting_condition = (self.table['Flag.Transit'] == 1)
+            #     condition = primary_condition & combined_condition & transiting_condition
+            # else:
+            #     condition = primary_condition & combined_condition
+            
+            indices = self._build_condition(
+                MAPPER= MAPPER,
+                missing_variable= missing_variable,
+                other_variables= other_variables,
+                transiting= transiting
+            )
+            
+            # indices = self.table[condition].index
 
-        if len(indices) == 0:
-            return
-            test = self.table[].iterrows()
-        
-        
-        
-        for ind, row in self.table.iterrows():
-            values = {key_name: row[key_value] * UNIT_MAPPER[key_name].value for key_name,key_value in MAPPER.items()}
-            
-            match sum([np.isnan(value) for value in values.values()]):
-                case 1:
-                    missing_variable = [name for name, value in values.items() if np.isnan(value)][0]
-                    other_variables = [name for name, value in values.items() if not(np.isnan(value))]
-                    other_uncertainties = {
-                        key: np.max([row[f"{MAPPER[key]}.Error.Lower"],
-                                    row[f"{MAPPER[key]}.Error.Upper"]]) for key in other_variables
-                    }
-                    missing_variable = symbols(missing_variable)
-                case 0:
-                    continue
-                case _ if sum([np.isnan(value) for value in values.values()]) > 1:
-                    continue
-            
+            if len(indices) == 0:
+                continue
+                
             solution = solve(Equation, missing_variable)[0]
-            
-            subbed_solution = solution.subs(
-                {symbols(var_name): var_value for var_name, var_value in values.items() if not(np.isnan(var_value))}
-                )
-            
-            uncertainties = {
-                variable: np.max([row[f'{MAPPER[variable]}.Error.Lower'], row[f'{MAPPER[variable]}.Error.Upper']]
-                                 ) * UNIT_MAPPER[variable].value for variable in other_variables
-            }
-            
-            total_uncertainty = 0
-            for var in other_variables:
-                partial_derivative = smp.diff(solution, symbols(var))
-                total_uncertainty += ((partial_derivative * uncertainties[var])**2)
-            total_uncertainty = smp.sqrt(total_uncertainty)
-            
-            uncertainty_result = total_uncertainty.subs(
-                {symbols(var_name): var_value for var_name, var_value in values.items() if not(np.isnan(var_value))}
-                )
-            uncertainty_result = uncertainty_result / UNIT_MAPPER[str(missing_variable)].value
-            
-            if subbed_solution.is_finite:
-                self.table.loc[ind, MAPPER[str(missing_variable)]] = float(subbed_solution)
-                self.table.loc[ind, f"{MAPPER[str(missing_variable)]}.Error.Lower"] = float(uncertainty_result)
-                self.table.loc[ind, f"{MAPPER[str(missing_variable)]}.Error.Upper"] = float(uncertainty_result)
+        
+        
+            for ind, row in self.table.loc[indices].iterrows():
+                values = {key_name: row[key_value] * UNIT_MAPPER[key_name].value for key_name,key_value in MAPPER.items()}
+
+                subbed_solution = solution.subs(
+                    {symbols(var_name): var_value for var_name, var_value in values.items() if not(np.isnan(var_value))}
+                    )
+
+                uncertainties = {
+                    variable: np.max([row[f'{MAPPER[variable]}.Error.Lower'], row[f'{MAPPER[variable]}.Error.Upper']]
+                                    ) * UNIT_MAPPER[variable].value for variable in other_variables
+                }
+                
+                total_uncertainty = 0
+                for var in other_variables:
+                    partial_derivative = smp.diff(solution, symbols(var))
+                    total_uncertainty += ((partial_derivative * uncertainties[var])**2)
+                total_uncertainty = smp.sqrt(total_uncertainty)
+                
+                uncertainty_result = total_uncertainty.subs(
+                    {symbols(var_name): var_value for var_name, var_value in values.items() if not(np.isnan(var_value))}
+                    )
+                uncertainty_result = uncertainty_result / UNIT_MAPPER[str(missing_variable)].value
+                
+                if missing_variable == 'R_s':
+                    logger.print('Hello')
+                
+                if subbed_solution.is_finite and subbed_solution.is_real:
+                    self.table.loc[ind, MAPPER[str(missing_variable)]] = float(subbed_solution)
+                    self.table.loc[ind, f"{MAPPER[str(missing_variable)]}.Error.Lower"] = float(uncertainty_result)
+                    self.table.loc[ind, f"{MAPPER[str(missing_variable)]}.Error.Upper"] = float(uncertainty_result)
+                elif not(subbed_solution.is_real):
+                    raise ValueError('Solution not finite')
         return
 
     def _calculate_impact_parameter(self) -> None:
@@ -345,9 +447,9 @@ class CalculationUtilities():
         
         UNIT_MAPPER = {
             'b': 1 * u.dimensionless_unscaled,
-            'a': (1 * u.au).to(u.m),
+            'a': (1 * u.au).to(u.R_sun),
             'i': (1 * u.deg).to(u.rad),
-            'R_s': (1 * u.R_sun).to(u.m)
+            'R_s': (1 * u.R_sun).to(u.R_sun)
         }
         
         import time
@@ -356,8 +458,9 @@ class CalculationUtilities():
             Equation=Equation,
             MAPPER= MAPPER,
             UNIT_MAPPER=UNIT_MAPPER,
+            transiting= True
         )
-        print(time.time() -t1)
+        print('Running took:',time.time() -t1)
         
     def __check_eccentricity(self) -> None:
         """
@@ -414,16 +517,22 @@ class CalculationUtilities():
             }
         
         UNIT_MAPPER = {
-            'T_14': (1*u.hour).to(u.s),
-            'P': (1*u.day).to(u.s),
-            'R_s': (1 * u.R_sun).to(u.m),
-            'R_p': (1 * u.R_jup).to(u.m),
-            'a': (1 * u.au).to(u.m),
+            'T_14': (1*u.hour).to(u.h),
+            'P': (1*u.day).to(u.h),
+            'R_s': (1 * u.R_sun).to(u.R_sun),
+            'R_p': (1 * u.R_jup).to(u.R_sun),
+            'a': (1 * u.au).to(u.R_sun),
             'b': 1 * u.dimensionless_unscaled,
             'i': (1 * u.deg).to(u.rad),
             'e': 1 * u.dimensionless_unscaled,
             'omega': (1 * u.deg).to(u.rad),
         }
+
+        self._solve_equation(
+            Equation=Equation,
+            MAPPER= MAPPER,
+            UNIT_MAPPER=UNIT_MAPPER,
+        )
 
         return
     
