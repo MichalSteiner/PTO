@@ -1,2 +1,9 @@
-sphinx>=4.0
-sphinx_rtd_theme>=0.5
+# Sphinx documentation generator
+Sphinx>=5.0  # specify a version that suits your project
+
+# Extensions for Sphinx
+sphinx-autodoc-typehints  # for type hint support in autodoc
+sphinxcontrib-napoleon    # for Google and NumPy style docstrings
+
+# Optional: Other extensions you may need
+sphinx_rtd_theme          # if you're using the Read the Docs theme
