@@ -145,20 +145,6 @@ class Utilities():
 class CatalogComposite(Utilities,
                        PlotUtilitiesComposite,
                        CalculationUtilities):
-    """
-    Class for holding the Composite catalogs.
-    
-    These are defined by having a single entry for single planet, regardless of the amount of different references.
-
-    Inheritance
-    ----------
-    Utilities
-        Class utilities common to both catalogs.
-    PlotUtilitiesComposite
-        Plot utilities for Composite catalog.
-    CalculationUtilities
-        Calculation utilities for both catalogs.
-    """
     table: pd.DataFrame | None = None
     filename: str = 'CatalogComposite.pkl'
     drop_mode: str = 'drop'

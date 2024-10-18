@@ -11,19 +11,6 @@ logger = logging.getLogger(__name__)
 logger = logger_default(logger) 
 
 class NASA_Exoplanet_Archive_CompositeDefault(cat.CatalogComposite):
-    """
-    Catalog for NASA Exoplanet Archive, the CompositeTable, without any modification.
-
-    Inheritance
-    ----------
-    cat.CatalogComposite
-        Utilities
-            Class utilities common to both catalogs.
-        PlotUtilitiesComposite
-            Plot utilities for Composite catalog.
-        CalculationUtilities
-            Calculation utilities for both catalogs.
-    """
     def load_API_table(self, force_load=False) -> None:
         """
         Loads the Table using the API system, in particular the TAP protocol. 

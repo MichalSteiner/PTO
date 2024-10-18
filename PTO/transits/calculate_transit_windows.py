@@ -8,7 +8,7 @@ Created on Tue Aug 22 10:35:50 2023
 #%% Importing libraries
 import sys
 import pandas as pd
-from PTO.PTO.transits.NASA_exo import NASA_Exoplanets_archive, logger
+# from PTO.transits.NASA_exo import NASA_Exoplanets_archive, logger
 import datetime
 import astropy.units as u
 import numpy as np
@@ -17,7 +17,7 @@ import astropy.coordinates as coord
 import matplotlib.pyplot as plt
 import seaborn as sns
 from dataclasses import dataclass
-from PTO.PTO.transits.observatories import Observatories
+# from PTO.PTO.transits.observatories import Observatories
 import re
 import matplotlib.dates as md 
 import os

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import specutils as sp
 import pandas as pd
-import rats.spectra_manipulation as sm
+# import rats.spectra_manipulation as sm
 
 
 try:

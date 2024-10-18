@@ -6,12 +6,12 @@ import pandas as pd
 import os 
 
 
-cwd = os.getcwd()
-os.chdir('/media/chamaeleontis/Observatory_main/Code/')
-from rats.utilities import default_logger_format
-import rats.parameters as para
-import rats.spectra_manipulation as sm
-os.chdir(cwd)
+# cwd = os.getcwd()
+# os.chdir('/media/chamaeleontis/Observatory_main/Code/')
+# from rats.utilities import default_logger_format
+# import rats.parameters as para
+# import rats.spectra_manipulation as sm
+# os.chdir(cwd)
 
 import calculations as calc
 import instruments as inst
