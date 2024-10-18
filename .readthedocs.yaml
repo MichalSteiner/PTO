@@ -23,7 +23,6 @@ sphinx:
   # Fail on all warnings to avoid broken references
   # fail_on_warning: true
 python:
-  version: "3.10"  # Specify the Python version (can be 3.7, 3.8, 3.9, etc.)
   install:
     - requirements: docs/requirements.txt  # List of dependencies for your docs
 
