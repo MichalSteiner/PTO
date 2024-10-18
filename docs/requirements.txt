@@ -16,3 +16,5 @@ astropy
 sympy
 pyvo
 specutils
+colorlog
+dill
