@@ -7,8 +7,9 @@ import os
 import sys
 
 # Add the project directory to sys.path
-sys.path.insert(0, os.path.abspath('../'))  # Adjust if your structure differs
-
+sys.path.insert(0, os.path.abspath('../../'))  # Adjust if your structure differs
+# Print sys.path for debugging
+print("sys.path:", sys.path)
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
