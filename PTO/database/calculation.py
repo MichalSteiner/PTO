@@ -245,7 +245,6 @@ class CalculationUtilities():
             case _:
                 raise NotImplementedError('This variable is not implemented. FIXME')
     
-    @time_function
     def _solve_equation(self,
                         Equation: Eq,
                         MAPPER: dict,
@@ -257,7 +256,7 @@ class CalculationUtilities():
         Parameters
         ----------
         Equation : Eq
-            Equation to solve for
+            Equation to solve for.
         MAPPER : dict
             Mapper matching the symbols and the column names in the table.
         UNIT_MAPPER : dict
@@ -268,6 +267,18 @@ class CalculationUtilities():
         ValueError
             If multiple solutions detected but unhandled, check what happened.
         """
+        for variable in MAPPER:
+            other_variables = {item:MAPPER[item] for item in MAPPER if item !=variable}
+            condition = (self.table[MAPPER[variable]].isna() &
+                         [self.table[MAPPER[variable_other]].notna() for variable_other in other_variables]
+                         )
+            indices = self.table[condition].index
+
+        if len(indices) == 0:
+            return
+            test = self.table[].iterrows()
+        
+        
         
         for ind, row in self.table.iterrows():
             values = {key_name: row[key_value] * UNIT_MAPPER[key_name].value for key_name,key_value in MAPPER.items()}
@@ -291,7 +302,6 @@ class CalculationUtilities():
             subbed_solution = solution.subs(
                 {symbols(var_name): var_value for var_name, var_value in values.items() if not(np.isnan(var_value))}
                 )
-            
             
             uncertainties = {
                 variable: np.max([row[f'{MAPPER[variable]}.Error.Lower'], row[f'{MAPPER[variable]}.Error.Upper']]
@@ -375,69 +385,45 @@ class CalculationUtilities():
     
     
     def _calculate_transit_length(self) -> None:
+        """
+        Calculates transit length, if not provided.
+        
+        It also reformats the values for eccentricity/ argument of periastron to ensure it will not impact the equation.
+        """
+        
+        self.__check_eccentricity()
         
         T_14, P, R_s, R_p, a, b, i, e, omega = symbols('T_14, P R_s R_p a b i e omega')
         
-        # sigma_P, sigma_R_s, sigma_R_p, sigma_a, sigma_b, sigma_i = symbols('sigma_P sigma_R_s sigma_R_p sigma_a sigma_b sigma_i')
-
         Equation = Eq(T_14,
                       (P / pi) * asin(
                           (R_s / a) * sqrt((1 + (R_p / R_s))**2 - b**2) / sin(i*pi/180)
-                          ) #* (sqrt(1-e**2) / ((1 + e)*sin(omega)))
+                          ) * (sqrt(1-e**2) / ((1 + e)*sin(omega)))
         )
         
-        
-        for ind, row in self.table.iterrows():
-            values = {
-                'T_14': row['Planet.TransitDuration'] * u.h.to(u.s),
-                'P': row['Planet.Period'] * u.d.to(u.s),
-                'R_s': row['Star.Radius'] * u.R_sun.to(u.m),
-                'R_p': row['Planet.RadiusJupiter'] * u.R_jup.to(u.m),
-                'a': row['Planet.SemiMajorAxis'] * u.au.to(u.m),
-                'b': row['Planet.ImpactParameter'],
-                'i': row['Planet.Inclination'],
-                # 'e': row['Planet.Eccentricity'],
-                # 'omega': row['Planet.ArgumentOfPeriastron']
+        MAPPER= {
+            'T_14': 'Planet.TransitDuration',
+            'P': 'Planet.Period',
+            'R_s': 'Star.Radius',
+            'R_p': 'Planet.RadiusJupiter',
+            'a': 'Planet.SemiMajorAxis',
+            'b': 'Planet.ImpactParameter',
+            'i': 'Planet.Inclination',
+            'e': 'Planet.Eccentricity',
+            'omega': 'Planet.ArgumentOfPeriastron'
             }
-            
-            match sum([np.isnan(value) for value in values.values()]):
-                case 1:
-                    missing_variable = [name for name, value in values.items() if np.isnan(value)][0]
-                    missing_variable = symbols(missing_variable)
-                    logger.info('Hello')
-                case 0:
-                    continue
-                case _ if sum([np.isnan(value) for value in values.values()]) > 1:
-                    continue
-                case _:
-                    raise ValueError('An error that should have never appeared has appeared.')
         
+        UNIT_MAPPER = {
+            'T_14': (1*u.hour).to(u.s),
+            'P': (1*u.day).to(u.s),
+            'R_s': (1 * u.R_sun).to(u.m),
+            'R_p': (1 * u.R_jup).to(u.m),
+            'a': (1 * u.au).to(u.m),
+            'b': 1 * u.dimensionless_unscaled,
+            'i': (1 * u.deg).to(u.rad),
+            'e': 1 * u.dimensionless_unscaled,
+            'omega': (1 * u.deg).to(u.rad),
+        }
 
-            Equation_subs = Equation.subs(
-                {symbols(var_name): var_value for var_name, var_value in values.items() if not(np.isnan(var_value))}
-                )
-            solution = solve(Equation_subs, missing_variable)
-        
-        
-        
-        
-        
-        
-        # dT_dP = T_14_expr.diff(P)
-        # dT_dR_s = T_14_expr.diff(R_s)
-        # dT_dR_p = T_14_expr.diff(R_p)
-        # dT_da = T_14_expr.diff(a)
-        # dT_db = T_14_expr.diff(b)
-        # dT_di = T_14_expr.diff(i)
-
-        # # General error propagation formula for sigma_T_14
-        # sigma_T_14_expr = sqrt(
-        #     (dT_dP * sigma_P)**2 +
-        #     (dT_dR_s * sigma_R_s)**2 +
-        #     (dT_dR_p * sigma_R_p)**2 +
-        #     (dT_da * sigma_a)**2 +
-        #     (dT_db * sigma_b)**2 +
-        #     (dT_di * sigma_i)**2
-        # )
-        return None
+        return
     
