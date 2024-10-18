@@ -7,3 +7,12 @@ sphinxcontrib-napoleon    # for Google and NumPy style docstrings
 
 # Optional: Other extensions you may need
 sphinx_rtd_theme          # if you're using the Read the Docs theme
+
+matplotlib
+numpy
+pandas
+seaborn
+astropy
+sympy
+pyvo
+specutils
