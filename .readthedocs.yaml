@@ -8,11 +8,11 @@ sphinx:
 
 # Python settings
 python:
-  version: "3.9"  # Specify the Python version (can be 3.7, 3.8, 3.9, etc.)
+  version: "3.10"  # Specify the Python version (can be 3.7, 3.8, 3.9, etc.)
   install:
     - requirements: docs/requirements.txt  # List of dependencies for your docs
 
 # Build settings
-formats:
-  - html
-  - pdf  # Optional, if you want PDF generation
+# formats:
+#   - html
+  # - pdf  # Optional, if you want PDF generation
