@@ -379,40 +379,35 @@ class CalculationUtilities():
                 continue
                 
             solution = solve(Equation, missing_variable)[0]
-        
-        
-            for ind, row in self.table.loc[indices].iterrows():
-                values = {key_name: row[key_value] * UNIT_MAPPER[key_name].value for key_name,key_value in MAPPER.items()}
-
-                subbed_solution = solution.subs(
-                    {symbols(var_name): var_value for var_name, var_value in values.items() if not(np.isnan(var_value))}
-                    )
-
-                uncertainties = {
-                    variable: np.max([row[f'{MAPPER[variable]}.Error.Lower'], row[f'{MAPPER[variable]}.Error.Upper']]
-                                    ) * UNIT_MAPPER[variable].value for variable in other_variables
-                }
-                
-                total_uncertainty = 0
-                for var in other_variables:
-                    partial_derivative = smp.diff(solution, symbols(var))
-                    total_uncertainty += ((partial_derivative * uncertainties[var])**2)
-                total_uncertainty = smp.sqrt(total_uncertainty)
-                
-                uncertainty_result = total_uncertainty.subs(
-                    {symbols(var_name): var_value for var_name, var_value in values.items() if not(np.isnan(var_value))}
-                    )
-                uncertainty_result = uncertainty_result / UNIT_MAPPER[str(missing_variable)].value
-                
-                if missing_variable == 'R_s':
-                    logger.print('Hello')
-                
-                if subbed_solution.is_finite and subbed_solution.is_real:
-                    self.table.loc[ind, MAPPER[str(missing_variable)]] = float(subbed_solution)
-                    self.table.loc[ind, f"{MAPPER[str(missing_variable)]}.Error.Lower"] = float(uncertainty_result)
-                    self.table.loc[ind, f"{MAPPER[str(missing_variable)]}.Error.Upper"] = float(uncertainty_result)
-                elif not(subbed_solution.is_real):
-                    raise ValueError('Solution not finite')
+            func = smp.lambdify([symbols(var) for var in other_variables.keys()], solution)
+            
+            column_values = [(self.table.loc[indices][var]) for var in other_variables.values()]
+            self.table.loc[indices, MAPPER[str(missing_variable)]] =  func(*column_values)
+            
+            uncertainties = [symbols(f"sigma_{variable}") for variable in other_variables]
+            
+            total_uncertainty = 0
+            for variable,uncertainty_variable in zip(other_variables.keys(), uncertainties):
+                partial_derivative = smp.diff(solution, symbols(variable))
+                total_uncertainty += ((partial_derivative * uncertainty_variable)**2)
+            total_uncertainty = smp.sqrt(total_uncertainty)
+            
+            
+            total_uncertainty_func = smp.lambdify(
+                [smp.symbols(var) for var in other_variables.keys()] + 
+                [uncertainty_variable for uncertainty_variable in uncertainties],
+                total_uncertainty,
+                )
+            
+            column_values.extend(
+                [(self.table.loc[indices][[f"{variable}.Error.Upper",
+                                          f"{variable}.Error.Lower"]].max(axis=1)) for variable in other_variables.values()]
+            )
+            
+            uncertainty_result = total_uncertainty_func(*column_values)
+            self.table.loc[indices, f"{MAPPER[str(missing_variable)]}.Error.Lower"] = uncertainty_result
+            self.table.loc[indices, f"{MAPPER[str(missing_variable)]}.Error.Upper"] = uncertainty_result
+            
         return
 
     def _calculate_impact_parameter(self) -> None:
@@ -440,15 +435,12 @@ class CalculationUtilities():
             'R_s': (1 * u.R_sun).to(u.R_sun)
         }
         
-        import time
-        t1= time.time()
         self._solve_equation(
             Equation=Equation,
             MAPPER= MAPPER,
             UNIT_MAPPER=UNIT_MAPPER,
             transiting= True
         )
-        print('Running took:',time.time() -t1)
         
     def __check_eccentricity(self) -> None:
         """
@@ -458,9 +450,11 @@ class CalculationUtilities():
         Furthermore, Argument of periastron (omega) is set to 90 degrees, which gives 1 when used in 
         """
         
-        condition = (self.table['Planet.Eccentricity'].isna() |
-                     self.table['Planet.Eccentricity'] == 0
-                     )
+        condition_nan = (self.table['Planet.Eccentricity'].isna())
+        condition_zer = (self.table['Planet.Eccentricity'] == 0)
+        
+        condition = condition_nan | condition_zer
+        
         indices = self.table[condition].index
 
         if len(indices) == 0:

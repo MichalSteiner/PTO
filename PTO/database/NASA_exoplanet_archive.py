@@ -87,7 +87,6 @@ if __name__ == '__main__':
     logger.print('Hello there!')
     test.load_API_table(force_load=True)
     test.print_all_keys()
-
     fig, ax = test.plot_diagram(
         x_key = 'Planet.Period',
         y_key = 'Planet.RadiusJupiter',
