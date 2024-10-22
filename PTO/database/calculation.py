@@ -282,63 +282,7 @@ class CalculationUtilities():
         else:
             condition = primary_condition & combined_condition
         return self.table[condition].index
-        
-#TODO
-    def _substitute_solution(self,
-                             solution,
-                             row,
-                             other_variables,
-                             missing_variable,
-                             mapper,
-                             unit_mapper):
-        """Substitutes the known values into the solution and calculates the uncertainty."""
-        values = {
-            key_name: row[key_value] * unit_mapper[key_name].value 
-            for key_name, key_value in mapper.items()
-        }
-        
-        subbed_solution = solution.subs(
-            {symbols(var_name): var_value for var_name, var_value in values.items() if not np.isnan(var_value)}
-        )
 
-        uncertainties = {
-            variable: max(
-                row.get(f'{mapper[variable]}.Error.Lower', 0), 
-                row.get(f'{mapper[variable]}.Error.Upper', 0)
-            ) * unit_mapper[variable].value
-            for variable in other_variables
-        }
-        
-        total_uncertainty = self._calculate_uncertainty(solution, uncertainties, values)
-        uncertainty_result = total_uncertainty / unit_mapper[str(missing_variable)].value
-
-        return subbed_solution, uncertainty_result
-
-#TODO
-    def _calculate_uncertainty(self,
-                               solution,
-                               uncertainties,
-                               values):
-        """Calculates total uncertainty using partial derivatives."""
-        total_uncertainty = 0
-        for var, uncertainty in uncertainties.items():
-            partial_derivative = smp.diff(solution, symbols(var))
-            total_uncertainty += (partial_derivative * uncertainty) ** 2
-        total_uncertainty = smp.sqrt(total_uncertainty)
-        
-        return total_uncertainty.subs({symbols(var_name): var_value for var_name, var_value in values.items()})
-
-#TODO
-    def _update_table(self,
-                      index,
-                      missing_variable,
-                      solution_value,
-                      uncertainty_result,
-                      mapper):
-        """Updates the table with the solved value and its uncertainty."""
-        self.table.loc[index, mapper[missing_variable]] = float(solution_value)
-        self.table.loc[index, f"{mapper[missing_variable]}.Error.Lower"] = float(uncertainty_result)
-        self.table.loc[index, f"{mapper[missing_variable]}.Error.Upper"] = float(uncertainty_result)
     
     def _solve_equation(self,
                         Equation: Eq,
@@ -359,12 +303,10 @@ class CalculationUtilities():
             Unit mapper to match symbols and the units for the symbol.
         transiting : bool
             Whether the system must be transiting. If true, only transiting planets are considered.
-
-        Raises
-        ------
-        ValueError
-            If multiple solutions detected but unhandled, check what happened.
         """
+        import warnings
+        warnings.filterwarnings('ignore')
+        
         for missing_variable in MAPPER:
             other_variables = {variable: MAPPER[variable] for variable in MAPPER if variable !=missing_variable}
             
@@ -377,13 +319,14 @@ class CalculationUtilities():
 
             if len(indices) == 0:
                 continue
-                
+            
+            # Solve and substitute for available columns: 
             solution = solve(Equation, missing_variable)[0]
             func = smp.lambdify([symbols(var) for var in other_variables.keys()], solution)
-            
             column_values = [(self.table.loc[indices][var]) for var in other_variables.values()]
             self.table.loc[indices, MAPPER[str(missing_variable)]] =  func(*column_values)
             
+            # Handling of uncertainties
             uncertainties = [symbols(f"sigma_{variable}") for variable in other_variables]
             
             total_uncertainty = 0
@@ -391,7 +334,6 @@ class CalculationUtilities():
                 partial_derivative = smp.diff(solution, symbols(variable))
                 total_uncertainty += ((partial_derivative * uncertainty_variable)**2)
             total_uncertainty = smp.sqrt(total_uncertainty)
-            
             
             total_uncertainty_func = smp.lambdify(
                 [smp.symbols(var) for var in other_variables.keys()] + 
@@ -407,7 +349,6 @@ class CalculationUtilities():
             uncertainty_result = total_uncertainty_func(*column_values)
             self.table.loc[indices, f"{MAPPER[str(missing_variable)]}.Error.Lower"] = uncertainty_result
             self.table.loc[indices, f"{MAPPER[str(missing_variable)]}.Error.Upper"] = uncertainty_result
-            
         return
 
     def _calculate_impact_parameter(self) -> None:

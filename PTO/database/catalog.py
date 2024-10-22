@@ -137,8 +137,14 @@ class Utilities():
         self.print_discovery_keys()
         self.print_magnitude_keys()
         self.print_flag_keys()
-    
 
+    def filter_by_key(self,
+                      key: str,
+                      value,
+                      
+                      ):
+        self.table
+        
 
 
 @dataclass
@@ -148,6 +154,7 @@ class CatalogComposite(Utilities,
     table: pd.DataFrame | None = None
     filename: str = 'CatalogComposite.pkl'
     drop_mode: str = 'drop'
+    legacy_table: pd.DataFrame | None = None
     
     def _get_all(self) -> None:
         """
@@ -171,3 +178,4 @@ class CatalogComposite(Utilities,
 class CatalogFull(Utilities):
     table: pd.DataFrame | None = None
     filename: str = 'CatalogFull.pkl'
+    legacy_table: pd.DataFrame | None = None

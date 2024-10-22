@@ -42,6 +42,7 @@ class NASA_Exoplanet_Archive_CompositeDefault(cat.CatalogComposite):
             self._drop_columns()
             self._absolute_errors()
             self._get_all()
+            self.legacy_table = self.table
             self.save()
             
     def _rename_columns(self) -> None:
@@ -87,9 +88,22 @@ if __name__ == '__main__':
     logger.print('Hello there!')
     test.load_API_table(force_load=True)
     test.print_all_keys()
-    fig, ax = test.plot_diagram(
-        x_key = 'Planet.Period',
-        y_key = 'Planet.RadiusJupiter',
-    )
+    # fig, ax = test.plot_diagram(
+    #     x_key = 'Planet.Period',
+    #     y_key = 'Planet.RadiusJupiter',
+    # )
 
+    logger.print(f"Length before further filtering of the table: {test.table.shape[0]}")
+    test.table = test.table[test.table['Magnitude.V'] < 10]
+    test.table = test.table[test.table['Planet.RadiusEarth'] > 3]
+    test.table = test.table[test.table['Planet.RadiusEarth'] < 8]
+    test.table = test.table[test.table['Planet.Period'] < 30]
+    logger.print(f"Length after further filtering of the table: {test.table.shape[0]}")
+
+    fig, ax = test.highlight_sample(
+        x_key= 'Planet.Period',
+        y_key= 'Planet.RadiusEarth',
+        marker= 'd'
+    )
+    ax.set_xlim(0.1,50)
     logger.print('General Kenobi!!!!')
