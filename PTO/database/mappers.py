@@ -397,3 +397,5 @@ _NASA_EXOPLANET_ARCHIVE_COMPOSITE_MAPPER = {
     'sy_kepmag_reflink': 'Magnitude.Kepler.Reference',
 
 }
+
+
