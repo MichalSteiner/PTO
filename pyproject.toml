@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "pto-transits"
+version = "0.1.5"
+description = "Planner for Transits Observations."
+authors = ["Michal Steiner <Michal.Steiner@unige.ch>"]
+license = "GPL-3.0-or-later"
+readme = "README.md"
+packages = [{include = "PTO"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "*"
+matplotlib = "*"
+pandas = "*"
+seaborn = "*"
+astropy = "*"
+sympy = "*"
+pyvo = "*"
+specutils = "*"
+colorlog = "*"
+dill = "*"
+expecto = "*"
+PyAstronomy = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

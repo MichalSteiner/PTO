@@ -1,0 +1,17 @@
+Telescope Setup: 4UTs
+Mode: multi MR 4x2 slow
+Input flux distribution:
+Source type: Template spectrum
+Type: Pickles_A0V
+Object Magnitude: V = 10 (Vega)
+Spatial Distribution: Point Source
+Sky Conditions:
+ show sky model configuration details
+Moon FLI: 0
+Moon-target separation: 45 degrees
+Airmass: 1
+Seeing: 0.5 arcsec | 0.8 arcsec | 1.3 arcsec
+T category to use in phase 1:   10%
+PWV: 30 mm
+Probability > 95% of realising the PWV ≤ 30 mm
+

@@ -1,0 +1,15 @@
+Telescope Setup: 1 UT
+Mode: single HR 2x1 slow
+Input flux distribution:
+Source type: Template spectrum
+Type: Kurucz_A1V
+Object Magnitude: V = 10 (Vega)
+Spatial Distribution: Point Source
+Sky Conditions:
+ show sky model configuration details
+Moon FLI: 0
+Moon-target separation: 45 degrees
+Airmass: 1
+T category to use in phase 1:   10%
+PWV: 30 mm
+Probability > 95% of realising the PWV ≤ 30 mm
