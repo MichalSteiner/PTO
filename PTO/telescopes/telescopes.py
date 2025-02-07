@@ -19,7 +19,6 @@ class Telescope():
     operational: bool = True,
     variable_name: str = ''
 
-
 # Calar Alto Observatory (CARMENES)
 CalarAlto = Telescope(
     name='Calar Alto Observatory',

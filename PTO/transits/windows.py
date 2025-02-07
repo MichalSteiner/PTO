@@ -267,4 +267,3 @@ if __name__ == '__main__':
         location= VLT
     )
     
-    logger.print('General Kenobi!!!!')
