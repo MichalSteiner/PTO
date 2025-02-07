@@ -270,93 +270,93 @@ if __name__ == '__main__':
 
 
 #%%
-def transform_time_format(input_string):
-    # Split the input string
-    target, date_str, quality, time_start, time_end, _ = input_string.split(';')
+# def transform_time_format(input_string):
+#     # Split the input string
+#     target, date_str, quality, time_start, time_end, _ = input_string.split(';')
 
-    # Parse the date
-    year = int(date_str[0:4])
-    month = int(date_str[4:6])
-    day = int(date_str[6:8])
+#     # Parse the date
+#     year = int(date_str[0:4])
+#     month = int(date_str[4:6])
+#     day = int(date_str[6:8])
 
-    # Parse the time
-    hour_start = int(time_start.split(':')[0])
-    minute_start = int(time_start.split(':')[1])
+#     # Parse the time
+#     hour_start = int(time_start.split(':')[0])
+#     minute_start = int(time_start.split(':')[1])
 
-    # If hour < 12, it's morning of the next day
-    if hour_start < 12:
-        observation_date = datetime(year, month, day) + timedelta(days=1)
-    else:
-        observation_date = datetime(year, month, day)
+#     # If hour < 12, it's morning of the next day
+#     if hour_start < 12:
+#         observation_date = datetime(year, month, day) + timedelta(days=1)
+#     else:
+#         observation_date = datetime(year, month, day)
 
-    hour_end = int(time_end.split(':')[0])
-    minute_end = int(time_end.split(':')[1])
+#     hour_end = int(time_end.split(':')[0])
+#     minute_end = int(time_end.split(':')[1])
 
-    if hour_end < 12:
-        observation_date_end = datetime(year, month, day) + timedelta(days=1)
-    else:
-        observation_date_end = datetime(year, month, day)
+#     if hour_end < 12:
+#         observation_date_end = datetime(year, month, day) + timedelta(days=1)
+#     else:
+#         observation_date_end = datetime(year, month, day)
 
 
-    # Create the start time
-    start_time = datetime(observation_date.year, 
-                         observation_date.month, 
-                         observation_date.day, 
-                         hour_start, 
-                         minute_start)
+#     # Create the start time
+#     start_time = datetime(observation_date.year, 
+#                          observation_date.month, 
+#                          observation_date.day, 
+#                          hour_start, 
+#                          minute_start)
     
-    end_time = datetime(observation_date_end.year, 
-                        observation_date_end.month, 
-                        observation_date_end.day, 
-                        hour_end, 
-                        minute_end)
+#     end_time = datetime(observation_date_end.year, 
+#                         observation_date_end.month, 
+#                         observation_date_end.day, 
+#                         hour_end, 
+#                         minute_end)
     
-    # Format to ISO time string
-    start_iso = start_time.strftime("%Y-%m-%dT%H:%M")
-    end_iso = end_time.strftime("%Y-%m-%dT%H:%M")
+#     # Format to ISO time string
+#     start_iso = start_time.strftime("%Y-%m-%dT%H:%M")
+#     end_iso = end_time.strftime("%Y-%m-%dT%H:%M")
 
-    # Create the output string
-    output = f"between({start_iso},{end_iso},{1},\"{target} P117\")"
+#     # Create the output string
+#     output = f"between({start_iso},{end_iso},{1},\"{target} P117\")"
 
-    return output
+#     return output
 
 # Example usage
-input_string = "CoRoT-22 b;20260522;10;03:37;09:54;1"
-result = transform_time_format(input_string)
-print(result)
+# input_string = "CoRoT-22 b;20260522;10;03:37;09:54;1"
+# result = transform_time_format(input_string)
+# print(result)
 
-# %%
-list_of_strings = [
-    'TOI-3071 b;20260112;1;03:45;07:35;1',
-    'TOI-3071 b;20260131;1;03:50;07:40;1',
-    'TOI-3071 b;20260214;1;02:19;06:09;1',
-    'TOI-3071 b;20260219;1;03:56;07:46;1',
-    'TOI-3071 b;20260228;1;00:47;04:37;1',
-    'TOI-3071 b;20260305;1;02:25;06:15;1',
-    'TOI-3071 b;20260310;1;04:02;07:52;1',
-    'TOI-3071 b;20260319;1;00:53;04:43;1',
-    'TOI-3071 b;20260324;1;02:31;06:21;1',
-    'TOI-3071 b;20260329;1;04:08;07:58;1',
-]
+# # %%
+# list_of_strings = [
+#     'TOI-3071 b;20260112;1;03:45;07:35;1',
+#     'TOI-3071 b;20260131;1;03:50;07:40;1',
+#     'TOI-3071 b;20260214;1;02:19;06:09;1',
+#     'TOI-3071 b;20260219;1;03:56;07:46;1',
+#     'TOI-3071 b;20260228;1;00:47;04:37;1',
+#     'TOI-3071 b;20260305;1;02:25;06:15;1',
+#     'TOI-3071 b;20260310;1;04:02;07:52;1',
+#     'TOI-3071 b;20260319;1;00:53;04:43;1',
+#     'TOI-3071 b;20260324;1;02:31;06:21;1',
+#     'TOI-3071 b;20260329;1;04:08;07:58;1',
+# ]
 
 
-list_of_strings = [
-    'TOI-3071 b;20250407;1;03:54;07:44;1',
-    'TOI-3071 b;20250416;1;00:45;04:35;1',
-    'TOI-3071 b;20250421;1;02:23;06:13;1',
-    'TOI-3071 b;20250505;1;00:51;04:41;1',
-    'TOI-3071 b;20250402;1;02:17;06:07;1',
-    'TOI-3071 b;20250524;1;00:57;04:47;1',
-    'TOI-3071 b;20250607;1;23:25;03:15;1',
-]
+# list_of_strings = [
+#     'TOI-3071 b;20250407;1;03:54;07:44;1',
+#     'TOI-3071 b;20250416;1;00:45;04:35;1',
+#     'TOI-3071 b;20250421;1;02:23;06:13;1',
+#     'TOI-3071 b;20250505;1;00:51;04:41;1',
+#     'TOI-3071 b;20250402;1;02:17;06:07;1',
+#     'TOI-3071 b;20250524;1;00:57;04:47;1',
+#     'TOI-3071 b;20250607;1;23:25;03:15;1',
+# ]
 
-list_of_strings = [
-    'TOI-3071 b;20260407;1;00:59;04:49;1',
-    'TOI-3071 b;20260412;1;02:36;06:26;1',
-    'TOI-3071 b;20260426;1;01:05;04:55;1',
-    'TOI-3071 b;20260501;1;02:42;06:32;1',
-    'TOI-3071 b;20260510;1;23:33;03:23;1',
-    'TOI-3071 b;20260515;1;01:11;05:01;1',
-    'TOI-3071 b;20260529;1;23:39;03:29;1',
-    'TOI-3071 b;20260617;1;23:45;03:35;1',
-]
+# list_of_strings = [
+#     'TOI-3071 b;20260407;1;00:59;04:49;1',
+#     'TOI-3071 b;20260412;1;02:36;06:26;1',
+#     'TOI-3071 b;20260426;1;01:05;04:55;1',
+#     'TOI-3071 b;20260501;1;02:42;06:32;1',
+#     'TOI-3071 b;20260510;1;23:33;03:23;1',
+#     'TOI-3071 b;20260515;1;01:11;05:01;1',
+#     'TOI-3071 b;20260529;1;23:39;03:29;1',
+#     'TOI-3071 b;20260617;1;23:45;03:35;1',
+# ]
