@@ -18,6 +18,12 @@ class Telescope():
     diameter: u.Quantity = 0 *u.m,
     operational: bool = True,
     variable_name: str = ''
+    
+    def telescope_constraints(self, Event):
+        
+        
+        ...
+    
 
 # Calar Alto Observatory (CARMENES)
 CalarAlto = Telescope(

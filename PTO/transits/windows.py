@@ -191,8 +191,10 @@ class Windows:
                                location: Telescope,
                                partial: float = 1,
                                velocity_offset: None | float = None,
-                               velocity_range: float = 5 #km/s
+                               velocity_range: float = 5, #km/s,
+                               save_figures: bool = True,
                                ):
+        
         
         if not(self.Airmass_limit):
             if location.name == 'Very Large Telescope (VLT)':
@@ -221,10 +223,11 @@ class Windows:
                         partial= partial,
                         Airmass_limit= self.Airmass_limit,
                         velocity_offset= velocity_offset,
-                        velocity_range= velocity_range
+                        velocity_range= velocity_range,
+                        save_figures= save_figures,
                     )
-                
                 self.windows_in_period.append(new_event)
+                
                 
 
     def define_baseline(self):
@@ -256,7 +259,7 @@ if __name__ == '__main__':
     
     Transits = Windows(
         table = test.table,
-        observing_period = 'ESO.115',
+        observing_period = 'ESO.115', # astropy.time.Time([start_date, end_date, scale = 'utc')
         directory= '/media/chamaeleontis/Observatory_main/ESO_scheduling/PTO_developement/',
         large_program= False
     )

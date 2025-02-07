@@ -380,7 +380,9 @@ class Event(WindowPlot):
     ObservationsFull: _Observations = _Observations()
     ObservationsTwilight: _Observations = _Observations()
     velocity_offset: None | float = None #km/s
-    velocity_range: float = 5 #km/s
+    velocity_range: float = 5, #km/s
+    save_figures: bool = True
+    
     
     def __post_init__(self):
         """
@@ -400,11 +402,15 @@ class Event(WindowPlot):
         
         if self.quality > 0:
             fig, _ = self.generate_plots()
-            directory = f"{self.directory}/{self.Location.name}/{self.row['Planet.Name'].replace(' ','')}"
+            directory = os.path.join(self.directory, self.Location.name, self.row['Planet.Name'].replace(' ',''))
             os.makedirs(directory, exist_ok=True)
             Night = (self.TimeArray.midnight-1*u.day)
             
-            fig.savefig(f"{directory}/Q{self.quality}_{Night.strftime('%Y%m%d')}_{self.row['Planet.Name'].replace(' ','')}.png")
+            
+            filepath = os.path.join(directory, f"Q{self.quality}_{Night.strftime('%Y%m%d')}_{self.row['Planet.Name'].replace(' ','')}.png")
+            
+            if self.save_figures:
+                fig.savefig(filepath)
             logger.info(f"        Transit on: {Night.strftime('%Y%m%d')} - Quality: {self.quality}; Uncertainty: {self.Uncertainty:.2f}")
         
         return

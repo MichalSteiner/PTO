@@ -15,4 +15,8 @@ For any bug/ feature requests, please open an issue on the GitLab page [https://
 To get started, please read the notebook at [https://pto.readthedocs.io/en/latest/Get_started.html](https://pto.readthedocs.io/en/latest/Get_started.html).
 The tutorial will be merged in a single example notebook soon.
 
+A general outline of usage is shown below:
+
+
+
 Acknowledgements: This code is redesigned by Michal Steiner based on legacy transit planner written by: Romain Allart, Mara Attia, Daniel Bayliss, Vincent Bourrier.

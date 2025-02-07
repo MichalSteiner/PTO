@@ -2,10 +2,6 @@
 
 The goal of this template is brevity for quick/smaller iterations. For a more thorough list of considerations for larger features or feature sets, you can leverage the detailed [feature proposal](https://gitlab.com/gitlab-org/gitlab/-/blob/master/.gitlab/issue_templates/Feature%20proposal%20-%20detailed.md). -->
 
-### Release notes
-
-<!-- What is the problem and solution you're proposing? This content sets the overall vision for the feature and serves as the release notes that will populate in various places, including the [release post blog](https://about.gitlab.com/releases/categories/releases/) and [Gitlab project releases](https://gitlab.com/gitlab-org/gitlab/-/releases). " -->
-
 ### Problem to solve
 
 <!-- What is the user problem you are trying to solve with this issue? -->
