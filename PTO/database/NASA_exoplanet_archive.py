@@ -270,9 +270,6 @@ if __name__ == '__main__':
 
 
 #%%
-from astropy.time import Time
-from datetime import datetime, timedelta
-
 def transform_time_format(input_string):
     # Split the input string
     target, date_str, quality, time_start, time_end, _ = input_string.split(';')

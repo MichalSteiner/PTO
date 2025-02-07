@@ -259,7 +259,7 @@ if __name__ == '__main__':
     
     Transits = Windows(
         table = test.table,
-        observing_period = 'ESO.115', # astropy.time.Time([start_date, end_date, scale = 'utc')
+        observing_period = 'ESO.115',
         directory= '/media/chamaeleontis/Observatory_main/ESO_scheduling/PTO_developement/',
         large_program= False
     )
