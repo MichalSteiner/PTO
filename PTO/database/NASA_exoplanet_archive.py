@@ -8,7 +8,8 @@ from ..utils.utilities import logger_default
 from .mappers import _NASA_EXOPLANET_ARCHIVE_COMPOSITE_MAPPER, _NASA_EXOPLANET_ARCHIVE_FULL_MAPPER
 
 logger = logging.getLogger(__name__)
-logger = logger_default(logger) 
+if not logger.handlers:
+    logger = logger_default(logger)
 
 class NASA_Exoplanet_Archive_CompositeDefault(cat.CatalogComposite):
     """

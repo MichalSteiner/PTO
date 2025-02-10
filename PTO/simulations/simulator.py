@@ -12,9 +12,10 @@ import astropy.constants as con
 
 import logging
 from ..utils.utilities import logger_default
-logger = logging.getLogger(__name__)
-logger = logger_default(logger) 
 
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    logger = logger_default(logger)
 
 try:
     import petitRADTRANS as prt

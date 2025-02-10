@@ -7,7 +7,8 @@ from ..simulations.simulator import Simulator
 from . import exposure_time_calculator as etc
 
 logger = logging.getLogger(__name__)
-logger = logger_default(logger) 
+if not logger.handlers:
+    logger = logger_default(logger)
 
 @dataclass
 class Spectrograph():

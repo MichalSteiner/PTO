@@ -7,7 +7,7 @@ import astropy.time as astime
 import astropy.coordinates as coord
 import matplotlib.pyplot as plt
 import seaborn as sns
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import re
 import matplotlib.dates as md 
 import os
@@ -17,7 +17,8 @@ import logging
 from ..utils.utilities import logger_default
 
 logger = logging.getLogger(__name__)
-logger = logger_default(logger) 
+if not logger.handlers:
+    logger = logger_default(logger)
 
 
 
@@ -369,18 +370,18 @@ class Event(WindowPlot):
     directory: str
     row: pd.Series
     Airmass_limit: float
-    TimeArray: _TimeArray = _TimeArray()
-    AltitudeArray: _AltitudeArray = _AltitudeArray()
-    VisibilityFull: _Visibility = _Visibility()
-    VisibilityTwilight: _Visibility = _Visibility()
-    Indices: _Indices = _Indices()
-    FlagsFull: _Flags_transit = _Flags_transit()
-    FlagsTwilight: _Flags_transit = _Flags_transit()
-    FlagsWindow: _Flags_window = _Flags_window()
-    ObservationsFull: _Observations = _Observations()
-    ObservationsTwilight: _Observations = _Observations()
-    velocity_offset: None | float = None #km/s
-    velocity_range: float = 5, #km/s
+    TimeArray: _TimeArray = field(default_factory=_TimeArray)
+    AltitudeArray: _AltitudeArray = field(default_factory=_AltitudeArray)
+    VisibilityFull: _Visibility = field(default_factory=_Visibility)
+    VisibilityTwilight: _Visibility = field(default_factory=_Visibility)
+    Indices: _Indices = field(default_factory=_Indices)
+    FlagsFull: _Flags_transit = field(default_factory=_Flags_transit)
+    FlagsTwilight: _Flags_transit = field(default_factory=_Flags_transit)
+    FlagsWindow: _Flags_window = field(default_factory=_Flags_window)
+    ObservationsFull: _Observations = field(default_factory=_Observations)
+    ObservationsTwilight: _Observations = field(default_factory=_Observations)
+    velocity_offset: None | float = None
+    velocity_range: float = 5
     save_figures: bool = True
     
     
@@ -404,14 +405,14 @@ class Event(WindowPlot):
             fig, _ = self.generate_plots()
             directory = os.path.join(self.directory, self.Location.name, self.row['Planet.Name'].replace(' ',''))
             os.makedirs(directory, exist_ok=True)
-            Night = (self.TimeArray.midnight-1*u.day)
+            self.observing_night = (self.TimeArray.midnight-1*u.day)
             
             
-            filepath = os.path.join(directory, f"Q{self.quality}_{Night.strftime('%Y%m%d')}_{self.row['Planet.Name'].replace(' ','')}.png")
+            filepath = os.path.join(directory, f"Q{self.quality}_{self.observing_night.strftime('%Y%m%d')}_{self.row['Planet.Name'].replace(' ','')}.png")
             
             if self.save_figures:
                 fig.savefig(filepath)
-            logger.info(f"        Transit on: {Night.strftime('%Y%m%d')} - Quality: {self.quality}; Uncertainty: {self.Uncertainty:.2f}")
+            logger.info(f"        Transit on: {self.observing_night.strftime('%Y%m%d')} - Quality: {self.quality}; Uncertainty: {self.Uncertainty:.2f}")
         
         return
     

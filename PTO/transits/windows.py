@@ -3,14 +3,18 @@ import pandas as pd
 import astropy.time as astime
 import astropy.units as u
 import logging
+import csv
 import numpy as np
+import os
 from ..utils.utilities import logger_default
 from datetime import datetime, timedelta
 from .observability import Event
 from ..telescopes.telescopes import Telescope, VLT
 
 logger = logging.getLogger(__name__)
-logger = logger_default(logger) 
+if not logger.handlers:
+    logger = logger_default(logger)
+
 
 def define_baseline(table):
     array_length = len(table)
@@ -27,8 +31,6 @@ class Windows:
     large_program: bool = False
     directory: str = ''
     Airmass_limit: float = None
-    
-    windows_in_period:list =  field(default_factory=list)
     
     
     def generate_windows(self):
@@ -194,7 +196,26 @@ class Windows:
                                velocity_range: float = 5, #km/s,
                                save_figures: bool = True,
                                ):
+        """
+        Generate observability windows for transiting exoplanets.
         
+        Parameters:
+        -----------
+        location : Telescope
+            The telescope location for which to generate observability windows.
+        partial : float, optional
+            The fraction of the transit duration to consider for partial observability (default is 1).
+        velocity_offset : None or float, optional
+            The velocity offset to apply (default is None).
+        velocity_range : float, optional
+            The range of velocities to consider in km/s (default is 5).
+        save_figures : bool, optional
+            Whether to save figures generated during the process (default is True).
+        
+        Returns:
+        --------
+        None
+        """
         
         if not(self.Airmass_limit):
             if location.name == 'Very Large Telescope (VLT)':
@@ -204,12 +225,19 @@ class Windows:
                 logger.warning('No airmass limit set. Setting to 2')
                 self.Airmass_limit = 2
         
+        os.makedirs(os.path.join(self.directory, location.name), exist_ok=True)
+        complete_summary = os.path.join(self.directory, location.name, 'complete_summary.csv')
+        csvfile_complete = open(complete_summary, 'w', newline='')
+        csv_writer_complete = csv.writer(csvfile_complete)
+        self.add_header_to_csv(csv_writer_complete)
+
+        
         for _, row in self.table.iterrows():
             logger.print('='*25)
             logger.print(f"Working on {row['Planet.Name']}")
             logger.print(f"    with Tc: {row['Planet.TransitMidpoint']}, P: {row['Planet.Period']} days and T14: {row['Planet.TransitDuration']} hours")
             logger.print('='*25)
-            
+            valid_events = []
             
             for window, window_uncertainty in zip(row['Planet.TransitWindowCenter'], row['Planet.TransitWindowCenter.Error']):
                 new_event = Event(
@@ -226,11 +254,39 @@ class Windows:
                         velocity_range= velocity_range,
                         save_figures= save_figures,
                     )
-                self.windows_in_period.append(new_event)
                 
                 
+                
+                if new_event.quality > 0:
+                    valid_events.append(new_event)
+            
+            if valid_events:
+                per_planet_summary = os.path.join(self.directory, location.name, row['Planet.Name'].replace(' ',''), 'planet_summary.csv')
+                with open(per_planet_summary, 'w', newline='') as csvfile_per_planet:
+                    csv_writer_per_planet = csv.writer(csvfile_per_planet)
+                    self.add_header_to_csv(csv_writer_per_planet)
+                
+                    # Write data for all valid events
+                    for event in valid_events:
+                        self.add_event_to_csv(csv_writer_per_planet, event)
+                        self.add_event_to_csv(csv_writer_complete, event)
+        csvfile_complete.close()
+        
 
+        
     def define_baseline(self):
+        """
+        Define the baseline for the transit windows.
+        
+        This method checks if the baseline attribute is None. If it is, it calls the 
+        `define_baseline` function to set the baseline for the table. Otherwise, it 
+        sets the 'Planet.Baseline' column in the table to the baseline value converted 
+        to hours.
+        
+        Returns:
+            None
+        """
+        
         
         if self.baseline is None:
             self.table = define_baseline(self.table)
@@ -239,7 +295,36 @@ class Windows:
         
         return
 
+    def add_header_to_csv(self, csv_writer):
+        
+        csv_writer.writerow([
+            'Planet Name',
+            'Night',
+            'Observation start',
+            'Observation end',
+            'Quality',
+            'Period',
+            'Transit midpoint',
+            'Transit center',
+            'Transit center error [min]',
+            'SM mode observable'
+            ])
+        return
 
+    def add_event_to_csv(self, csv_writer, event):
+        csv_writer.writerow([
+            event.row['Planet.Name'],  # Planet Name
+            event.TimeArray.midnight.datetime.strftime('%Y%m%d'),              # Night
+            event.TimeArray.time_array[event.ObservationsFull.complete[0]].strftime('%H:%M'),  # Start Time
+            event.TimeArray.time_array[event.ObservationsFull.complete[-1]].strftime('%H:%M'),  # End Time
+            event.quality,       # Quality
+            event.row['Planet.Period'],
+            event.row['Planet.TransitMidpoint'],
+            event.Night,
+            event.Uncertainty.to(u.min).value,
+            len(event.ObservationsFull.Ingress) > 30,
+        ])
+        return
 
 if __name__ == '__main__':
     import os
@@ -250,16 +335,17 @@ if __name__ == '__main__':
     test.load_API_table(force_load=True)
     
     logger.print(f"Length before further filtering of the table: {test.table.shape[0]}")
-    test.table = test.table[test.table['Magnitude.V'] < 10]
-    test.table = test.table[test.table['Planet.RadiusEarth'] > 3]
-    test.table = test.table[test.table['Planet.RadiusEarth'] < 8]
-    test.table = test.table[test.table['Planet.Period'] < 30]
+    # test.table = test.table[test.table['Magnitude.V'] < 10]
+    # test.table = test.table[test.table['Planet.RadiusEarth'] > 3]
+    # test.table = test.table[test.table['Planet.RadiusEarth'] < 8]
+    # test.table = test.table[test.table['Planet.Period'] < 30]
+    test.table = test.table[test.table['Planet.Name'].isin(['HD 209458 b', 'HD 189733 b', 'WASP-76 b'])]
+    
     logger.print(f"Length after further filtering of the table: {test.table.shape[0]}")
 
     
     Transits = Windows(
         table = test.table,
-        observing_period = 'ESO.115',
         directory= '/media/chamaeleontis/Observatory_main/ESO_scheduling/PTO_developement/',
         large_program= False
     )
@@ -267,6 +353,7 @@ if __name__ == '__main__':
     Transits.print_windows()
     
     Transits.generate_observability(
-        location= VLT
+        location= VLT,
+        save_figures= False,
     )
     

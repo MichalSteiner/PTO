@@ -7,7 +7,8 @@ import logging
 from ..utils.utilities import logger_default
 
 logger = logging.getLogger(__name__)
-logger = logger_default(logger) 
+if not logger.handlers:
+    logger = logger_default(logger)
 
 
 @dataclass

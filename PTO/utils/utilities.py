@@ -19,6 +19,7 @@ from colorlog import ColoredFormatter
 from functools import wraps
 import inspect
 import logging
+
 logger = logging.getLogger(__name__)
 
 def addLoggingLevel(levelName, levelNum, methodName=None):

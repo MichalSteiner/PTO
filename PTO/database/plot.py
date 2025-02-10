@@ -9,7 +9,8 @@ from .mappers import LABEL_MAPPER, SCALE_MAPPER
 import matplotlib.colors as mcolors
 
 logger = logging.getLogger(__name__)
-logger = logger_default(logger)
+if not logger.handlers:
+    logger = logger_default(logger)
 
 
 @dataclass

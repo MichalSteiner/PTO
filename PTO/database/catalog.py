@@ -10,10 +10,9 @@ from .plot import PlotUtilitiesComposite
 from .calculation import CalculationUtilities
 import csv
 
-
-
 logger = logging.getLogger(__name__)
-logger = logger_default(logger) 
+if not logger.handlers:
+    logger = logger_default(logger)
 
 class _Utilities():
     """

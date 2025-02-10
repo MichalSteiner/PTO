@@ -11,7 +11,8 @@ import sympy as smp
 from ..utils.utilities import logger_default, time_function, disable_func
 
 logger = logging.getLogger(__name__)
-logger = logger_default(logger) 
+if not logger.handlers:
+    logger = logger_default(logger)
 
 
 class CalculationUtilities():
