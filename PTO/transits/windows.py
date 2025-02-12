@@ -24,6 +24,51 @@ def define_baseline(table):
 
 @dataclass
 class Windows:
+    """
+    A class to handle the generation and management of transit windows for exoplanet observations.
+    
+    Attributes
+    ----------
+    table : pd.DataFrame
+        DataFrame containing the exoplanet data.
+    center_phase : float, optional
+        The center phase of the transit (default is 0.0).
+    observing_period : astime.Time | None | str, optional
+        The observing period for the transits (default is None).
+    baseline : u.Quantity | None, optional
+        The baseline for the transit windows (default is None).
+    large_program : bool, optional
+        Flag indicating if the program is a large program (default is False).
+    directory : str, optional
+        Directory to save output files (default is '').
+    Airmass_limit : float, optional
+        The airmass limit for observations (default is None).
+    
+    Methods
+    -------
+    generate_windows():
+        Generate transit windows for the exoplanets in the table.
+    print_windows():
+        Print the transit windows for each exoplanet.
+    __post_init__():
+        Initialize the observing period and generate transit windows.
+    get_proposal_period():
+        Determine the observing period based on the provided input.
+    _get_period_for_next_year():
+        Set the observing period to the next year.
+    _get_proposal_period_from_string():
+        Parse the observing period from a string.
+    get_dates_for_ESO_semester(P_number: int) -> astime.Time:
+        Get the start and end dates for an ESO semester.
+    to_eso_format(time_start, time_end, target_name, quality=1) -> str:
+    generate_observability(location: Telescope, partial: float = 1, velocity_offset: None | float = None, velocity_range: float = 5, save_figures: bool = True):
+    define_baseline():
+    add_header_to_csv(csv_writer: csv.writer):
+        Add a header row to a CSV file using the provided CSV writer.
+    add_event_to_csv(csv_writer: csv.writer, event: Event):
+        Add an event's details to a CSV file using the provided CSV writer.
+    """
+    
     table: pd.DataFrame
     center_phase: float = 0.0
     observing_period: astime.Time | None | str = None
@@ -34,6 +79,17 @@ class Windows:
     
     
     def generate_windows(self):
+        """
+        Generate transit windows for planets in the table.
+        
+        This method calculates the midpoints of transit windows for each planet in the table
+        within the specified observing period. It also calculates the associated errors for
+        these midpoints.
+        Raises:
+            ValueError: If the table is empty and no calculations can be performed.
+        Returns:
+            None
+        """
         
         if len(self.table) == 0:
             raise ValueError('Table is empty. Cannot calculate windows')
@@ -73,6 +129,18 @@ class Windows:
         return
     
     def print_windows(self):
+        """
+        Prints the transit windows for each planet in the table.
+        
+        Iterates over each row in the table and prints the transit window centers
+        along with their uncertainties for each planet. The output is formatted
+        with a separator line and includes the planet name, transit window center,
+        uncertainty, and the formatted date and time in UT.
+        
+        Returns:
+            None
+        """
+        
         for _, row in self.table.iterrows():
             logger.print('='*25)
             logger.print(f"Transit windows centers for {row['Planet.Name']}")
@@ -80,6 +148,17 @@ class Windows:
                 logger.print(f"    {window} ± {uncertainty:.2f} | {window.strftime('%Y-%m-%d %H:%M')} UT")
     
     def __post_init__(self):
+        """
+        Post-initialization method to set up the observing period, generate windows, 
+        and define the baseline. This method is automatically called after the 
+        object's initialization.
+        
+        It performs the following steps:
+        1. Retrieves the proposal period and logs the observing period.
+        2. Generates observation windows.
+        3. Defines the baseline for observations.
+        """
+        
         self.get_proposal_period()
         logger.info('='*25)
         logger.info('Set observing period:')
@@ -94,6 +173,19 @@ class Windows:
     
     
     def get_proposal_period(self):
+        """
+        Determines the proposal period based on the observing period attribute.
+        
+        This method checks the type of the `observing_period` attribute and 
+        determines the proposal period accordingly. If `observing_period` is 
+        None, it calls `_get_period_for_next_year()`. If `observing_period` is 
+        a string, it calls `_get_proposal_period_from_string()`. If 
+        `observing_period` is of type `astime.Time`, it does nothing. For any 
+        other type, it raises a `ValueError`.
+        Raises:
+            ValueError: If `observing_period` is not None, str, or astime.Time.
+        """
+        
         if self.observing_period is None:
             self._get_period_for_next_year()
         elif type(self.observing_period) == str:
@@ -104,6 +196,17 @@ class Windows:
             raise ValueError('Invalid type for observing period.') 
 
     def _get_period_for_next_year(self):
+        """
+        Calculate the observing period for the next year.
+        This method sets the `observing_period` attribute to a time range
+        starting from today at 12:00 PM to the same date and time next year.
+        The dates are formatted as 'YYYY-MM-DD 12:00:00.000' and converted
+        to an `astime.Time` object with UTC scale.
+        
+        Returns:
+            None
+        """
+        
         today = datetime.now().replace(hour=12, minute=0, second=0, microsecond=0)
         next_year = today.replace(year=today.year + 1)
 
@@ -113,6 +216,16 @@ class Windows:
         self.observing_period = astime.Time([date1, date2], scale='utc')
 
     def _get_proposal_period_from_string(self):
+        """
+        Extracts the proposal period from the observing period string and sets the observing period
+        to the corresponding dates for the ESO semester.
+        If the observing period string starts with 'ESO.', it extracts the numeric part of the string,
+        converts it to an integer, and uses it to get the dates for the ESO semester.
+        
+        Raises:
+            ValueError: If the observing period string does not start with 'ESO.'.
+        """
+        
         if self.observing_period.startswith('ESO.'):
             self.observing_period = self.get_dates_for_ESO_semester(
                 P_number= int(''.join(c for c in self.observing_period if c.isdigit())),
@@ -271,9 +384,8 @@ class Windows:
                         self.add_event_to_csv(csv_writer_per_planet, event)
                         self.add_event_to_csv(csv_writer_complete, event)
         csvfile_complete.close()
-        
+        self.generate_calendar(complete_summary)
 
-        
     def define_baseline(self):
         """
         Define the baseline for the transit windows.
@@ -295,8 +407,28 @@ class Windows:
         
         return
 
-    def add_header_to_csv(self, csv_writer):
+    def add_header_to_csv(self,
+                          csv_writer: csv.writer):
+        """
+        Adds a header row to a CSV file using the provided CSV writer.
         
+        Parameters:
+        -----------
+        csv_writer : csv.writer
+            The CSV writer object used to write to the CSV file.
+        
+        The header row contains the following columns:
+        - 'Planet Name'
+        - 'Night'
+        - 'Observation start'
+        - 'Observation end'
+        - 'Quality'
+        - 'Period'
+        - 'Transit midpoint'
+        - 'Transit center'
+        - 'Transit center error [min]'
+        - 'SM mode observable'
+        """
         csv_writer.writerow([
             'Planet Name',
             'Night',
@@ -308,10 +440,36 @@ class Windows:
             'Transit center',
             'Transit center error [min]',
             'SM mode observable'
-            ])
+        ])
         return
 
-    def add_event_to_csv(self, csv_writer, event):
+    def add_event_to_csv(self,
+                         csv_writer:csv.writer,
+                         event:Event):
+        """
+        Adds an event's details to a CSV file using the provided CSV writer.
+
+        Parameters:
+        -----------
+        csv_writer : csv.writer
+            The CSV writer object used to write to the CSV file.
+        event : Event
+            The event object containing details about the transit event.
+
+        The following details are written to the CSV file:
+        - Planet Name
+        - Night (formatted as YYYYMMDD)
+        - Start Time (formatted as HH:MM)
+        - End Time (formatted as HH:MM)
+        - Quality of the event
+        - Planet's orbital period
+        - Planet's transit midpoint
+        - Night of the event
+        - Uncertainty in minutes
+        - Whether the transit is observable by Service Mode using ESO rules
+        """
+        
+        
         csv_writer.writerow([
             event.row['Planet.Name'],  # Planet Name
             event.TimeArray.midnight.datetime.strftime('%Y%m%d'),              # Night
@@ -326,6 +484,61 @@ class Windows:
         ])
         return
 
+    
+    def generate_calendar(self, complete_summary: str):
+        
+        import pandas as pd
+        import calplot
+        import numpy as np
+        
+        from matplotlib.colors import ListedColormap,BoundaryNorm
+        
+        start_calendar = self.observing_period[0].datetime
+        end_calendar = self.observing_period[-1].datetime
+        
+        df = pd.read_csv(complete_summary)
+        df['Night'] = pd.to_datetime(df['Night'], format='%Y%m%d')
+        
+        def create_event_calendar(events_df, date_column, start_date, end_date):
+
+            events_series = events_df[date_column].value_counts()
+            events_series.index = pd.to_datetime(events_series.index)
+            date_range = pd.date_range(start=start_date, end=end_date, freq='D').normalize()
+            events_series = events_series.reindex(date_range, fill_value=0)
+            
+            
+            # Create custom colormap with grey for out-of-range dates
+            colors = ['green', 'green', 'green', 'orange']  # lightgrey for out-of-range
+            bounds = [-0.5, 0.9, 1.1, 5.5]  # or similar small range around 1
+
+            custom_cmap = ListedColormap(colors)
+            norm = BoundaryNorm(bounds, custom_cmap.N)
+            
+            # Plot the calendar
+            fig, ax = calplot.calplot(
+                events_series,
+                cmap=custom_cmap,  # Red-Yellow-Green colormap
+                fillcolor='black',  # Color for days without data
+                daylabels='MTWTFSS',
+                dayticks=[0, 1, 2, 3, 4, 5, 6],  # Show some day labels
+                figsize=(16, 8),
+                suptitle='Transits events',
+                colorbar=False
+            )
+            return fig
+
+        # Usage example:
+        # start_date and end_date should be datetime objects
+        # df is your DataFrame with events
+        fig = create_event_calendar(
+            df, 
+            'Night',
+            start_calendar,
+            end_calendar
+        )
+        fig.savefig(complete_summary.replace('csv', 'png'))
+    
+    
 if __name__ == '__main__':
     import os
     from ..database.NASA_exoplanet_archive import NASA_Exoplanet_Archive_CompositeDefault
@@ -335,11 +548,11 @@ if __name__ == '__main__':
     test.load_API_table(force_load=True)
     
     logger.print(f"Length before further filtering of the table: {test.table.shape[0]}")
-    # test.table = test.table[test.table['Magnitude.V'] < 10]
-    # test.table = test.table[test.table['Planet.RadiusEarth'] > 3]
-    # test.table = test.table[test.table['Planet.RadiusEarth'] < 8]
-    # test.table = test.table[test.table['Planet.Period'] < 30]
-    test.table = test.table[test.table['Planet.Name'].isin(['HD 209458 b', 'HD 189733 b', 'WASP-76 b'])]
+    test.table = test.table[test.table['Magnitude.V'] < 10]
+    test.table = test.table[test.table['Planet.RadiusEarth'] > 3]
+    test.table = test.table[test.table['Planet.RadiusEarth'] < 8]
+    test.table = test.table[test.table['Planet.Period'] < 30]
+    # test.table = test.table[test.table['Planet.Name'].isin(['HD 209458 b', 'HD 189733 b', 'WASP-76 b', ])]
     
     logger.print(f"Length after further filtering of the table: {test.table.shape[0]}")
 

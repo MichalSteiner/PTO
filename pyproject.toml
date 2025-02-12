@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pto-transits"
-version = "0.1.5"
+version = "0.1.6.1"
 description = "Planner for Transits Observations."
 authors = ["Michal Steiner <Michal.Steiner@unige.ch>"]
 license = "GPL-3.0-or-later"
@@ -21,6 +21,7 @@ colorlog = "*"
 dill = "*"
 expecto = "*"
 PyAstronomy = "*"
+calplot = "*"
 
 [build-system]
 requires = ["poetry-core"]

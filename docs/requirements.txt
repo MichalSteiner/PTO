@@ -22,4 +22,5 @@ colorlog
 dill
 expecto
 PyAstronomy
+calplot
 pto-transits
